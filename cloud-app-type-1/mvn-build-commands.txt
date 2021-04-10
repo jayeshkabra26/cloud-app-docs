@@ -1,0 +1,19 @@
+cd authentics/auth-minister
+mvn spring-boot:build-image -DskipTests
+
+cd ../auth-server
+mvn mvn spring-boot:build-image -DskipTests
+
+cd ../../configuration-handler/api-gateway-master
+mvn mvn spring-boot:build-image -DskipTests
+
+cd ../../configuration-handler/cloud-config-server
+mvn mvn spring-boot:build-image -DskipTests
+
+cd ../../configuration-handler/discovery-server
+mvn mvn spring-boot:build-image -DskipTests
+
+cd ../../configuration-handler/limits-service
+mvn mvn spring-boot:build-image -DskipTests
+
+

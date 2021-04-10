@@ -1,0 +1,82 @@
+version: '3.7'
+
+services:
+  discovery-server:
+    image: jk/discovery-server:1.0
+    mem_limit: 700m
+    ports:
+      - "8761:8761"
+    networks:
+      - cloud-net
+  api-gateway-master:
+    image: jk/api-gateway-master:1.0
+    mem_limit: 700m
+    ports:
+      - "8765:8765"
+    depends_on:
+      - discovery-server
+      - rabbitmq
+    networks:
+      - cloud-net
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+  auth-minister:
+    image: jk/auth-minister:1.0
+    mem_limit: 700m
+    ports:
+      - "10000:10000"
+    networks:
+      - cloud-net
+    depends_on:
+      - discovery-server
+      - rabbitmq
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+  auth-server:
+    image: jk/auth-server:1.0
+    mem_limit: 700m
+    ports:
+      - "9000:9000"
+    networks:
+      - cloud-net
+    depends_on:
+      - discovery-server
+      - rabbitmq
+      - auth-minister
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+  zipkin-server:
+    image: openzipkin/zipkin:2.23
+    mem_limit: 300m
+    restart: on-failure
+    ports:
+      - "9411:9411"
+    depends_on:
+      - rabbitmq
+    networks:
+      - cloud-net
+    environment:      
+      RABBIT_URI: amqp://guest:guest@rabbitmq:5672
+  rabbitmq:
+    #image: rabbitmq:3.5.3-management
+    image: rabbitmq:3-management    
+    mem_limit: 500m
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - cloud-net
+networks:
+  cloud-net:
